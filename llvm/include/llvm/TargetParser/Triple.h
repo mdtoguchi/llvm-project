@@ -831,6 +831,8 @@ public:
            getArch() == Triple::spirv;
   }
 
+  bool isSPIROrSPIRV() const { return isSPIR() || isSPIRV(); }
+
   /// Tests whether the target is SPIR-V Logical
   bool isSPIRVLogical() const {
     return getArch() == Triple::spirv;
