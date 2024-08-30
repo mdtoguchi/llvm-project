@@ -48,3 +48,30 @@
 // RUN: | FileCheck -check-prefix=CHK-FSYCL-IS-HOST %s
 // CHK-FSYCL-IS-DEVICE: clang{{.*}} "-fsycl-is-device" {{.*}} "-emit-llvm-bc"
 // CHK-FSYCL-IS-HOST: clang{{.*}} "-fsycl-is-host"
+
+// Verify header search dirs are added with -fsycl
+// RUN: %clang -### -fsycl %s 2>&1 \
+// RUN: | FileCheck %s -check-prefixes=CHECK-HEADER-DIR
+// RUN: %clang_cl -### -fsycl %s 2>&1 \
+// RUN: | FileCheck %s -check-prefixes=CHECK-HEADER-DIR
+// CHECK-HEADER-DIR: clang{{.*}} "-fsycl-is-device"
+// CHECK-HEADER-DIR-SAME: "-internal-isystem" "[[ROOT:[^"]*]]bin{{[/\\]+}}..{{[/\\]+}}include{{[/\\]+}}sycl"
+// CHECK-HEADER-DIR-NOT: -internal-isystem
+// CHECK-HEADER-DIR-SAME: "-internal-isystem" "[[ROOT]]bin{{[/\\]+}}..{{[/\\]+}}include{{[/\\]+}}sycl{{[/\\]+}}stl_wrappers"
+// CHECK-HEADER-DIR-NOT: -internal-isystem
+// CHECK-HEADER-DIR-SAME: "-internal-isystem" "[[ROOT]]bin{{[/\\]+}}..{{[/\\]+}}include"
+// CHECK-HEADER-DIR: clang{{.*}} "-fsycl-is-host"
+// CHECK-HEADER-DIR-SAME: "-internal-isystem" "[[ROOT]]bin{{[/\\]+}}..{{[/\\]+}}include{{[/\\]+}}sycl"
+// CHECK-HEADER-DIR-NOT: -internal-isystem
+// CHECK-HEADER-DIR-SAME: "-internal-isystem" "[[ROOT]]bin{{[/\\]+}}..{{[/\\]+}}include{{[/\\]+}}sycl{{[/\\]+}}stl_wrappers"
+// CHECK-HEADER-DIR-NOT: -internal-isystem
+// CHECK-HEADER-DIR-SAME: "-internal-isystem" "[[ROOT]]bin{{[/\\]+}}..{{[/\\]+}}include"
+
+/// Check for option incompatibility with -fsycl
+// RUN: not %clang -### -fsycl -ffreestanding %s 2>&1 \
+// RUN: | FileCheck -check-prefix=CHK-INCOMPATIBILITY %s \
+// RUN:   -DINCOMPATOPT=-ffreestanding
+// RUN: not %clang -### -fsycl --offload-new-driver -static-libstdc++ %s 2>&1 \
+// RUN: | FileCheck -check-prefix=CHK-INCOMPATIBILITY %s \
+// RUN:   -DINCOMPATOPT=-static-libstdc++
+// CHK-INCOMPATIBILITY: error: invalid argument '[[INCOMPATOPT]]' not allowed with '-fsycl'
