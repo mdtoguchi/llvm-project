@@ -5581,8 +5581,6 @@ def nostdincxx : Flag<["-"], "nostdinc++">, Visibility<[ClangOption, CC1Option]>
   MarshallingInfoNegativeFlag<HeaderSearchOpts<"UseStandardCXXIncludes">>;
 def nostdlib : Flag<["-"], "nostdlib">, Group<Link_Group>;
 def nostdlibxx : Flag<["-"], "nostdlib++">;
-def nolibsycl : Flag<["-"], "nolibsycl">, Flags<[NoXarchOption]>,
-  Visibility<[ClangOption, CLOption]>, HelpText<"Do not link SYCL runtime library">;
 def object : Flag<["-"], "object">;
 def o : JoinedOrSeparate<["-"], "o">,
   Flags<[NoXarchOption]>,
