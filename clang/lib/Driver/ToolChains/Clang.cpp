@@ -1075,7 +1075,7 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
   if (JA.isOffloading(Action::OFK_HIP))
     getToolChain().AddHIPIncludeArgs(Args, CmdArgs);
   if (JA.isOffloading(Action::OFK_SYCL))
-    toolchains::SYCLToolChain::AddSYCLIncludeArgs(D, Args, CmdArgs);
+    getToolChain().AddSYCLIncludeArgs(Args, CmdArgs);
 
   // If we are offloading to a target via OpenMP we need to include the
   // openmp_wrappers folder which contains alternative system headers.
@@ -4979,7 +4979,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   bool IsHIP = JA.isOffloading(Action::OFK_HIP);
   bool IsHIPDevice = JA.isDeviceOffloading(Action::OFK_HIP);
   bool IsSYCL = JA.isOffloading(Action::OFK_SYCL);
-  bool IsSYCLOffloadDevice = JA.isDeviceOffloading(Action::OFK_SYCL);
+  bool IsSYCLDevice = JA.isDeviceOffloading(Action::OFK_SYCL);
   bool IsOpenMPDevice = JA.isDeviceOffloading(Action::OFK_OpenMP);
   bool IsExtractAPI = isa<ExtractAPIJobAction>(JA);
   bool IsDeviceOffloadAction = !(JA.isDeviceOffloading(Action::OFK_None) ||
@@ -5125,7 +5125,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Arg *SYCLStdArg = Args.getLastArg(options::OPT_sycl_std_EQ);
 
-  if (IsSYCLOffloadDevice) {
+  if (IsSYCLDevice) {
     // Pass the triple of host when doing SYCL
     llvm::Triple AuxT = C.getDefaultToolChain().getTriple();
     std::string NormalizedTriple = AuxT.normalize();
@@ -5151,7 +5151,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     // Add any options that are needed specific to SYCL offload while
     // performing the host side compilation.
-    if (!IsSYCLOffloadDevice) {
+    if (!IsSYCLDevice) {
       // Let the FE know we are doing a SYCL offload compilation, but we are
       // doing the host pass.
       CmdArgs.push_back("-fsycl-is-host");
@@ -6092,7 +6092,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Prepare `-aux-target-cpu` and `-aux-target-feature` unless
   // `--gpu-use-aux-triple-only` is specified.
   if (!Args.getLastArg(options::OPT_gpu_use_aux_triple_only) &&
-      (IsCudaDevice || IsHIPDevice || IsSYCLOffloadDevice)) {
+      (IsCudaDevice || IsHIPDevice || IsSYCLDevice)) {
     const ArgList &HostArgs =
         C.getArgsForToolChain(nullptr, StringRef(), Action::OFK_None);
     std::string HostCPU =

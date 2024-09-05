@@ -14,6 +14,18 @@
 namespace clang {
 namespace driver {
 
+class SYCLInstallationDetector {
+public:
+  SYCLInstallationDetector(const Driver &D);
+  void AddSYCLIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                          llvm::opt::ArgStringList &CC1Args) const;
+  void print(llvm::raw_ostream &OS) const;
+
+private:
+  const Driver &D;
+  llvm::SmallVector<llvm::SmallString<128>, 4> InstallationCandidates;
+};
+
 namespace toolchains {
 
 class LLVM_LIBRARY_VISIBILITY SYCLToolChain : public ToolChain {
@@ -46,9 +58,8 @@ public:
 
   void addClangWarningOptions(llvm::opt::ArgStringList &CC1Args) const override;
   CXXStdlibType GetCXXStdlibType(const llvm::opt::ArgList &Args) const override;
-  static void AddSYCLIncludeArgs(const clang::driver::Driver &Driver,
-                                 const llvm::opt::ArgList &DriverArgs,
-                                 llvm::opt::ArgStringList &CC1Args);
+  void AddSYCLIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                          llvm::opt::ArgStringList &CC1Args) const override;
   void AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                             llvm::opt::ArgStringList &CC1Args) const override;
   void AddClangCXXStdlibIncludeArgs(
@@ -58,6 +69,8 @@ public:
   SanitizerMask getSupportedSanitizers() const override;
 
   const ToolChain &HostTC;
+
+  SYCLInstallationDetector SYCLInstallation;
 };
 
 } // end namespace toolchains
