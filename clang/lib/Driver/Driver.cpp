@@ -1004,13 +1004,13 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
   // SYCL
   //
   // We need to generate a SYCL toolchain if the user specified -fsycl.
-  // If -fsycl is supplied without any of these we will assume SPIR-V.
-  bool HasValidSYCLRuntime =
+  // If -fsycl is supplied we will assume SPIR-V.
+  bool IsSYCL =
       C.getInputArgs().hasFlag(options::OPT_fsycl, options::OPT_fno_sycl,
                                false);
 
   auto argSYCLIncompatible = [&](OptSpecifier OptId) {
-    if (!HasValidSYCLRuntime)
+    if (!IsSYCL)
       return;
     if (Arg *IncompatArg = C.getInputArgs().getLastArg(OptId))
       Diag(clang::diag::err_drv_argument_not_allowed_with)
@@ -1023,20 +1023,19 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
 
   llvm::SmallVector<llvm::Triple, 4> UniqueSYCLTriplesVec;
 
-  // If -fsycl is supplied without -fsycl-targets we will assume SPIR-V.
-  // For -fsycl-device-only, we also setup the implied triple as needed.
-  if (HasValidSYCLRuntime) {
+  // If -fsycl is supplied we will assume SPIR-V.
+  if (IsSYCL) {
     addSYCLDefaultTriple(C, UniqueSYCLTriplesVec);
-  }
 
-  // We'll need to use the SYCL and host triples as the key into
-  // getOffloadingDeviceToolChain, because the device toolchains we're
-  // going to create will depend on both.
-  const ToolChain *HostTC = C.getSingleOffloadToolChain<Action::OFK_Host>();
-  for (auto &TT : UniqueSYCLTriplesVec) {
-    auto SYCLTC = &getOffloadingDeviceToolChain(C.getInputArgs(), TT, *HostTC,
-                                                Action::OFK_SYCL);
-    C.addOffloadDeviceToolChain(SYCLTC, Action::OFK_SYCL);
+    // We'll need to use the SYCL and host triples as the key into
+    // getOffloadingDeviceToolChain, because the device toolchains we're
+    // going to create will depend on both.
+    const ToolChain *HostTC = C.getSingleOffloadToolChain<Action::OFK_Host>();
+    for (const auto &TT : UniqueSYCLTriplesVec) {
+      auto SYCLTC = &getOffloadingDeviceToolChain(C.getInputArgs(), TT, *HostTC,
+                                                  Action::OFK_SYCL);
+      C.addOffloadDeviceToolChain(SYCLTC, Action::OFK_SYCL);
+    }
   }
 
   //
@@ -6636,6 +6635,7 @@ const ToolChain &Driver::getOffloadingDeviceToolChain(
       break;
     }
     case Action::OFK_SYCL:
+      // TODO: Add additional Arch values for Ahead of Time support for SYCL.
       switch (Target.getArch()) {
       case llvm::Triple::spir:
       case llvm::Triple::spir64:

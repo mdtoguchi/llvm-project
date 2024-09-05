@@ -5126,7 +5126,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Arg *SYCLStdArg = Args.getLastArg(options::OPT_sycl_std_EQ);
 
   if (IsSYCLDevice) {
-    // Pass the triple of host when doing SYCL
+    // Host triple is needed when doing SYCL device compilations.
     llvm::Triple AuxT = C.getDefaultToolChain().getTriple();
     std::string NormalizedTriple = AuxT.normalize();
     CmdArgs.push_back("-aux-triple");
@@ -5152,8 +5152,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Add any options that are needed specific to SYCL offload while
     // performing the host side compilation.
     if (!IsSYCLDevice) {
-      // Let the FE know we are doing a SYCL offload compilation, but we are
-      // doing the host pass.
+      // Let the front-end host compilation flow know about SYCL offload
+      // compilation.
       CmdArgs.push_back("-fsycl-is-host");
     }
   }
